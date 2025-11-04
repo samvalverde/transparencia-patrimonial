@@ -4,10 +4,20 @@ services:
   dashboard:
     build: .
     container_name: transparencia-dashboard
+<<<<<<< HEAD
     command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+=======
+    command: streamlit run app/app.py --server.port=8501 --server.address=0.0.0.0
+>>>>>>> 5e7151d82fd3502e0930ce377ab856954880eec6
     ports:
       - "8501:8501"
     volumes:
       - ./app:/app
       - ./data:/data
       - ./models:/models
+<<<<<<< HEAD
+=======
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on: []
+>>>>>>> 5e7151d82fd3502e0930ce377ab856954880eec6

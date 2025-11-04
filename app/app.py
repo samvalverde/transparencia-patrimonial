@@ -10,8 +10,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # poetry shell
 # poetry run streamlit run app/app.py
 
+<<<<<<< HEAD
 # docker-compose up --build
 # docker build -t transparencia-patrimonial-cr .
+=======
+>>>>>>> 5e7151d82fd3502e0930ce377ab856954880eec6
 
 # =========================
 # CONFIGURACIÓN INICIAL
