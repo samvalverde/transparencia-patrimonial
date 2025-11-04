@@ -3,6 +3,15 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import joblib
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+# poetry shell
+# poetry run streamlit run app/app.py
+
+# docker-compose up --build
+# docker build -t transparencia-patrimonial-cr .
 
 # =========================
 # CONFIGURACIÓN INICIAL
@@ -23,9 +32,9 @@ en la evolución del patrimonio de funcionarios públicos mediante modelos de *M
 # =========================
 # CARGA DE DATOS Y MODELO
 # =========================
-DATA_PATH1 = "../data/synthetic_cgr_declaraciones.csv"
-DATA_PATH2 = "../data/synthetic_registros_propiedades.csv"
-MODEL_PATH = "../models/trained_model.pkl"
+DATA_PATH1 = os.path.join(BASE_DIR, "data", "synthetic_cgr_declaraciones.csv")
+DATA_PATH2 = os.path.join(BASE_DIR, "data", "synthetic_registro_nacional.csv")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "trained_model.pkl")
 
 @st.cache_data
 def load_data():
