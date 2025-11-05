@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  dashboard:
+    build: .
+    container_name: transparencia-dashboard
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app:/app
+      - ./data:/data
+      - ./models:/models

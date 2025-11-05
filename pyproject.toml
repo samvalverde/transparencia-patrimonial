@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "desafio-pida"
+name = "transparencia-patrimonial"
 version = "0.1.0"
 description = ""
-authors = ["JersonPQ <prendes.2507@gmail.com>"]
+authors = ["samuel valverde <savalverde@estudiantec.cr>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -12,6 +12,9 @@ pandas = "^2.3.3"
 geopandas = "^1.1.1"
 matplotlib = "^3.10.7"
 seaborn = "^0.13.2"
+streamlit = "^1.51.0"
+plotly = "^6.3.1"
+joblib = "^1.5.2"
 scikit-learn = "^1.7.2"
 
 
