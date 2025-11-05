@@ -9,5 +9,7 @@ services:
       - "8501:8501"
     volumes:
       - ./app:/app
+      - ./data:/app/data
       - ./data:/data
       - ./models:/models
+      - ./scripts:/scripts

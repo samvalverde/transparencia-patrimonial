@@ -3,3 +3,5 @@ pandas
 plotly
 joblib
 scikit-learn
+requests
+geopandas

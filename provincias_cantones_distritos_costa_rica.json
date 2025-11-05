@@ -301,7 +301,7 @@
 						"08": "Escobal"
 					}
 				},
-				"06":{
+				"06": {
 					"nombre": "Naranjo",
 					"distritos": {
 						"01": "Naranjo",
@@ -545,7 +545,7 @@
 						"06": "San José de la Montaña"
 					}
 				},
-				"03": { 
+				"03": {
 					"nombre": "Santo Domingo",
 					"distritos": {
 						"01": "Santo Domingo",
@@ -558,7 +558,7 @@
 						"08": "Para"
 					}
 				},
-				"04": { 
+				"04": {
 					"nombre": "Santa Barbara",
 					"distritos": {
 						"01": "Santa Bárbara",
@@ -569,7 +569,7 @@
 						"06": "Puraba"
 					}
 				},
-				"05": { 
+				"05": {
 					"nombre": "San Rafael",
 					"distritos": {
 						"01": "San Rafael",
@@ -579,7 +579,7 @@
 						"05": "Concepción"
 					}
 				},
-				"06": { 
+				"06": {
 					"nombre": "San Isidro",
 					"distritos": {
 						"01": "San Isidro",
@@ -588,7 +588,7 @@
 						"04": "San Francisco"
 					}
 				},
-				"07": { 
+				"07": {
 					"nombre": "Belén",
 					"distritos": {
 						"01": "San Antonio",
@@ -596,7 +596,7 @@
 						"03": "La Asuncion"
 					}
 				},
-				"08": { 
+				"08": {
 					"nombre": "Flores",
 					"distritos": {
 						"01": "San Joaquín",
@@ -604,14 +604,14 @@
 						"03": "Llorente"
 					}
 				},
-				"09": { 
+				"09": {
 					"nombre": "San Pablo",
 					"distritos": {
 						"01": "San Pablo",
 						"02": "Rincon De Sabanilla"
 					}
 				},
-				"10": { 
+				"10": {
 					"nombre": "Sarapiquí",
 					"distritos": {
 						"01": "Puerto Viejo",
@@ -895,7 +895,7 @@
 						"06": "Alegría"
 					}
 				},
-				"04": { 
+				"04": {
 					"nombre": "Talamanca",
 					"distritos": {
 						"01": "Bratsi",
