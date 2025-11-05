@@ -1,10 +1,18 @@
+import argparse
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import MinMaxScaler
 
-df_registro = pd.read_csv("./data/synthetic_registro_nacional.csv")
-df_cgr = pd.read_csv("./data/synthetic_cgr_declaraciones.csv")
+parser = argparse.ArgumentParser(description="Detección de anomalías territorial")
+parser.add_argument("--cgr", dest="cgr_path", type=str, default="./data/synthetic_cgr_declaraciones.csv",
+                    help="Ruta al CSV de la CGR (por defecto ./data/synthetic_cgr_declaraciones.csv)")
+parser.add_argument("--registro", dest="registro_path", type=str, default="./data/synthetic_registro_nacional.csv",
+                    help="Ruta al CSV del Registro Nacional (por defecto ./data/synthetic_registro_nacional.csv)")
+args = parser.parse_args()
+
+df_registro = pd.read_csv(args.registro_path)
+df_cgr = pd.read_csv(args.cgr_path)
 
 # REGISTRO NACIONAL
 
