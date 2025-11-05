@@ -1078,7 +1078,7 @@ st.markdown(
     """
 - Los datos sintéticos permiten visualizar la estructura esperada del sistema patrimonial.
 - El modelo de detección de anomalías puede identificar casos con incrementos patrimoniales atípicos.
-- Al incorporar los datos reales, el dashboard mostrará alertas automáticas y métricas agregadas por institución o región.
+- Al incorporar los datos reales, el dashboard mostrará alertas automáticas y métricas agregadas por región.
 """
 )
 
