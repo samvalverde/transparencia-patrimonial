@@ -16,6 +16,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # =========================
 # CONFIGURACIÓN INICIAL
 # =========================
+ANOMALIES_PATH = os.path.join(BASE_DIR, "analisis_anomalias_territorial.csv")
+
+@st.cache_data
+def load_anomalies():
+    try:
+        return pd.read_csv(ANOMALIES_PATH)
+    except:
+        return None
+
+anom = load_anomalies()
+if anom is not None:
+    st.subheader("Resultados de anomalías territoriales")
+    st.dataframe(anom.head())
+
 st.set_page_config(
     page_title="Transparencia Patrimonial CR",
     page_icon="💰",
@@ -37,10 +51,33 @@ DATA_PATH2 = os.path.join(BASE_DIR, "data", "synthetic_registro_nacional.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "models", "trained_model.pkl")
 
 @st.cache_data
+
 def load_data():
     df1 = pd.read_csv(DATA_PATH1)
     df2 = pd.read_csv(DATA_PATH2)
-    return pd.merge(df1, df2, on="id", how="inner")
+    
+    # Crear columnas derivadas en df1
+    df1["valor_patrimonio"] = (df1["activos_totales"] - df1["pasivos_totales"]).clip(lower=0)
+    df1["valor_propiedades"] = (df1["distrib_inmuebles_%"] / 100) * df1["activos_totales"]
+
+    # Promedio de valor declarado por provincia y año en df2
+    df2["anio"] = pd.to_datetime(df2["periodo"], errors="coerce").dt.year
+    df2_grouped = df2.groupby(["provincia", "anio"], as_index=False)["valor_declarado"].mean()
+    df2_grouped.rename(columns={"valor_declarado": "valor_medio_registral"}, inplace=True)
+
+    # Unir ambos por provincia y año
+    df1["anio"] = df1["anio_declaracion"]
+    df = pd.merge(df1, df2_grouped, on=["provincia", "anio"], how="left")
+
+    # Rellenar valores faltantes
+    df["valor_medio_registral"].fillna(0, inplace=True)
+
+    # Si el modelo ya generó scores
+    if "anomalia_score" in df.columns:
+        df["anomalia_score"] = df["anomalia_score"].astype(float)
+
+    return df
+
 
 @st.cache_resource
 def load_model():
