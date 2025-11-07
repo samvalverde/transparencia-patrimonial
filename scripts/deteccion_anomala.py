@@ -112,11 +112,12 @@ df_merged["densidad_actos_por_func"]     = df_merged["cant_actos_registrales"] /
 # Limpieza de infinitos o nulos
 df_merged = df_merged.replace([np.inf, -np.inf], np.nan).fillna(0)
 
-# Variaciones por provincia
-df_merged = df_merged.sort_values(["provincia", "anio"])
+# Variaciones por provincia, cantón y distrito
+df_merged = df_merged.sort_values(["provincia", "canton", "distrito", "anio"])
 
+group_cols = ["provincia", "canton", "distrito"]
 for col in ["valor_total_bienes", "patrimonio_neto", "activos_totales", "pasivos_totales"]:
-    df_merged[f"var_{col}"] = df_merged.groupby("provincia")[col].pct_change()
+    df_merged[f"var_{col}"] = df_merged.groupby(group_cols)[col].pct_change()
 
 # Diferencia entre variaciones (patrimonio vs bienes)
 df_merged["dif_var_bienes_patrimonio"] = df_merged["var_valor_total_bienes"] - df_merged["var_patrimonio_neto"]
