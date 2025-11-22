@@ -4,35 +4,8 @@ import pandas as pd
 import plotly.express as px
 import joblib
 import os
-from pathlib import Path
-import numpy as np
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import MinMaxScaler
-import json
-import unicodedata
-from typing import Dict, Any
-import subprocess
-import sys
-import tempfile
-import shutil
 
-try:
-    import geopandas as gpd
-except Exception:
-    gpd = None  # Fallback a requests + px si no está disponible
-
-try:
-    import requests
-except Exception:
-    requests = None  # Se manejará más adelante si no está disponible
-
-# BASE_DIR: carpeta raíz del proyecto (2 niveles arriba de este archivo)
-BASE_DIR = Path(__file__).resolve().parents[1]
-
-# Configuración de página (debe ser la primera llamada de Streamlit)
-st.set_page_config(
-    page_title="Transparencia Patrimonial CR", page_icon="💰", layout="wide"
-)
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # poetry shell
 # poetry run streamlit run app/app.py
@@ -43,145 +16,58 @@ st.set_page_config(
 # =========================
 # CONFIGURACIÓN INICIAL
 # =========================
-ANOMALIES_FILENAME = "analisis_anomalias_territorial.csv"
-RANKING_FILENAME = "ranking_provincias_anomalias.csv"
-ANOMALIES_PATH = BASE_DIR / ANOMALIES_FILENAME
-
-# Rutas de datos y modelo (definidas temprano para usarlas en la UI de carga)
-DATA_PATH1 = BASE_DIR / "data" / "synthetic_cgr_declaraciones.csv"
-DATA_PATH2 = BASE_DIR / "data" / "synthetic_registro_nacional.csv"
-MODEL_PATH = BASE_DIR / "models" / "trained_model.pkl"
-
-
-def _find_existing_file(name: str) -> Path | None:
-    """Busca un archivo por nombre en ubicaciones típicas (repo root, /app, cwd)."""
-    candidates = [BASE_DIR, Path("/app"), Path.cwd()]
-    for d in candidates:
-        try:
-            p = d / name
-            if p.exists():
-                return p
-        except Exception:
-            continue
-    return None
-
+ANOMALIES_PATH = os.path.join(BASE_DIR, "analisis_anomalias_territorial.csv")
 
 @st.cache_data
 def load_anomalies():
     try:
-        p = _find_existing_file(ANOMALIES_FILENAME)
-        if p is None:
-            return None
-        return pd.read_csv(str(p))
-    except Exception:
+        return pd.read_csv(ANOMALIES_PATH)
+    except:
         return None
 
+anom = load_anomalies()
+if anom is not None:
+    st.subheader("Resultados de anomalías territoriales")
+    st.dataframe(anom.head())
+
+st.set_page_config(
+    page_title="Transparencia Patrimonial CR",
+    page_icon="💰",
+    layout="wide"
+)
 
 st.title("Transparencia Patrimonial CR")
-st.markdown(
-    """
+st.markdown("""
 Aplicación desarrollada como parte del Desafío de Datos Abiertos PIDA.
 Esta herramienta combina datos patrimoniales y registrales para detectar **patrones anómalos**
 en la evolución del patrimonio de funcionarios públicos mediante modelos de *Machine Learning*.
-"""
-)
-
-# =========================
-# ARCHIVOS DE ENTRADA (Sidebar)
-# =========================
-st.sidebar.header("Datos de entrada")
-st.sidebar.caption(
-    "Cargue nuevos CSV para reemplazar los datos actuales de la carpeta data/."
-)
-
-uploaded_cgr = st.sidebar.file_uploader(
-    "CGR — synthetic_cgr_declaraciones.csv",
-    type=["csv"],
-    help="Archivo con declaraciones (anio_declaracion, activos_totales, pasivos_totales, provincia, canton, distrito, identificador_anonimo_declarante, ...)",
-)
-
-uploaded_reg = st.sidebar.file_uploader(
-    "Registro — synthetic_registro_nacional.csv",
-    type=["csv"],
-    help="Archivo con actos registrales (periodo o anio, provincia, canton, distrito, tipo_acto_registral, valor_declarado, ...)",
-)
-
-col_btn_upload1, col_btn_upload2 = st.sidebar.columns(2)
-apply_uploads = col_btn_upload1.button("Reemplazar archivos")
-reset_btn = col_btn_upload2.button("Restablecer caché")
-
-if apply_uploads:
-    try:
-        replaced = []
-        if uploaded_cgr is not None:
-            content = uploaded_cgr.read()
-            Path(DATA_PATH1).write_bytes(content)
-            replaced.append(Path(DATA_PATH1).name)
-        if uploaded_reg is not None:
-            content = uploaded_reg.read()
-            Path(DATA_PATH2).write_bytes(content)
-            replaced.append(Path(DATA_PATH2).name)
-        if replaced:
-            st.sidebar.success(f"Reemplazados: {', '.join(replaced)}")
-            try:
-                st.cache_data.clear()
-            except Exception:
-                pass
-            try:
-                st.rerun()
-            except Exception:
-                st.experimental_rerun()
-    except Exception as e:
-        st.sidebar.error(f"Error al reemplazar archivos: {e}")
+""")
 
 # =========================
 # CARGA DE DATOS Y MODELO
 # =========================
-
+DATA_PATH1 = os.path.join(BASE_DIR, "data", "synthetic_cgr_declaraciones.csv")
+DATA_PATH2 = os.path.join(BASE_DIR, "data", "synthetic_registro_nacional.csv")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "trained_model.pkl")
 
 @st.cache_data
+
 def load_data():
-    # Verificar que los archivos existen antes de leer
-    p1 = Path(DATA_PATH1)
-    p2 = Path(DATA_PATH2)
-    if not p1.exists() or not p2.exists():
-        missing = []
-        if not p1.exists():
-            missing.append(str(p1))
-        if not p2.exists():
-            missing.append(str(p2))
-        # No usar st.error aquí directamente para poder testear la función; la llamadora mostrará el mensaje.
-        raise FileNotFoundError(f"Faltan archivos de datos: {', '.join(missing)}")
-
-    df1 = pd.read_csv(str(DATA_PATH1))
-    df2 = pd.read_csv(str(DATA_PATH2))
-
+    df1 = pd.read_csv(DATA_PATH1)
+    df2 = pd.read_csv(DATA_PATH2)
+    
     # Crear columnas derivadas en df1
-    df1["valor_patrimonio"] = (df1["activos_totales"] - df1["pasivos_totales"]).clip(
-        lower=0
-    )
-    df1["valor_propiedades"] = (df1["distrib_inmuebles_%"] / 100) * df1[
-        "activos_totales"
-    ]
+    df1["valor_patrimonio"] = (df1["activos_totales"] - df1["pasivos_totales"]).clip(lower=0)
+    df1["valor_propiedades"] = (df1["distrib_inmuebles_%"] / 100) * df1["activos_totales"]
 
     # Promedio de valor declarado por provincia y año en df2
-    # Derivar año desde 'periodo' o usar 'anio' si ya existe
-    if "periodo" in df2.columns:
-        df2["anio"] = pd.to_datetime(df2["periodo"], errors="coerce").dt.year
-    elif "anio" not in df2.columns:
-        df2["anio"] = pd.NaT
-    df2_grouped = df2.groupby(["provincia", "anio"], as_index=False)[
-        "valor_declarado"
-    ].mean()
-    df2_grouped.rename(
-        columns={"valor_declarado": "valor_medio_registral"}, inplace=True
-    )
+    df2["anio"] = pd.to_datetime(df2["periodo"], errors="coerce").dt.year
+    df2_grouped = df2.groupby(["provincia", "anio"], as_index=False)["valor_declarado"].mean()
+    df2_grouped.rename(columns={"valor_declarado": "valor_medio_registral"}, inplace=True)
 
     # Unir ambos por provincia y año
     df1["anio"] = df1["anio_declaracion"]
-    df = pd.merge(
-        df1, df2_grouped, on=["provincia", "anio"], how="left", validate="m:1"
-    )
+    df = pd.merge(df1, df2_grouped, on=["provincia", "anio"], how="left")
 
     # Rellenar valores faltantes
     df["valor_medio_registral"].fillna(0, inplace=True)
@@ -599,24 +485,11 @@ def render_province_map(
 @st.cache_resource
 def load_model():
     try:
-        if not Path(MODEL_PATH).exists():
-            return None
-        return joblib.load(str(MODEL_PATH))
-    except Exception:
+        return joblib.load(MODEL_PATH)
+    except:
         return None
 
-
-# Cargar datos y manejar faltantes de forma amigable para el usuario
-try:
-    df = load_data()
-except FileNotFoundError as e:
-    st.error(
-        "No se pudieron cargar los CSV necesarios. "
-        + "Asegúrese de que la carpeta `data/` existe y contiene los archivos esperados: \n"
-        + str(e)
-    )
-    st.stop()
-
+df = load_data()
 model = load_model()
 
 # =========================
@@ -624,17 +497,11 @@ model = load_model()
 # =========================
 st.header("Descripción general de los datos")
 
-# KPIs relacionados con el análisis del modelo
-col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
-col_kpi1.metric("Registros base (CGR x año)", f"{len(df):,}")
-try:
-    anio_min, anio_max = int(df["anio"].min()), int(df["anio"].max())
-    col_kpi2.metric("Cobertura temporal", f"{anio_min}–{anio_max}")
-except Exception:
-    col_kpi2.metric("Cobertura temporal", "ND")
+st.write("Vista previa del dataset:")
+st.dataframe(df.head())
 
-col_kpi3.metric("Provincias", df["provincia"].nunique())
-col_kpi4.metric("Ámbito geográfico", "Provincias, Cantones y Distritos")
+st.write("Estadísticas descriptivas:")
+st.write(df.describe())
 
 # Métricas de variables clave que alimentan el modelo
 # with st.expander("Ver resumen de variables relevantes"):
@@ -686,7 +553,7 @@ if analisis_path.exists():
 ## (Sección de visualizaciones exploratorias removida a solicitud del usuario)
 
 # =========================
-# SECCIÓN 3: ANÁLISIS TERRITORIAL Y RANKINGS
+# SECCIÓN 3: RESULTADOS DEL MODELO
 # =========================
 st.header("Análisis territorial — detección de zonas de riesgo")
 
@@ -1074,14 +941,11 @@ if run_btn:
 # =========================
 st.header("Conclusiones preliminares")
 
-st.markdown(
-    """
+st.markdown("""
 - Los datos sintéticos permiten visualizar la estructura esperada del sistema patrimonial.
 - El modelo de detección de anomalías puede identificar casos con incrementos patrimoniales atípicos.
-- Al incorporar los datos reales, el dashboard mostrará alertas automáticas y métricas agregadas por región.
-"""
-)
+- Al incorporar los datos reales, el dashboard mostrará alertas automáticas y métricas agregadas por institución o región.
+""")
 
-st.caption(
-    "© 2025 Proyecto Transparencia Patrimonial CR – Instituto Tecnológico de Costa Rica"
-)
+st.caption("© 2025 Proyecto Transparencia Patrimonial CR – Instituto Tecnológico de Costa Rica")
+

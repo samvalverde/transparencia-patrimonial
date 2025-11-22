@@ -136,6 +136,34 @@ features = [
 X = df_merged[features].fillna(0)
 X_scaled = MinMaxScaler().fit_transform(X)
 
+#Deteccion de anomalias con MAD
+def mad_zscore(series: pd.Series) -> pd.Series:
+    x = series.values.astype(float)
+    median = np.median(x)   
+    abs_dev = np.abs(x - median)
+    mad = np.median(abs_dev)
+
+    if mad == 0:
+        return np.zeros_like(x)
+
+    z_scores = 0.6745 * (x - median) / mad
+    return z_scores
+
+# Aplicar MAD Z-score a cada feature
+mad_cols = []
+for col in features:
+    z = mad_zscore(df_merged[col].fillna(0))
+    col_name = f"mad_z_{col}"
+    df_merged[col_name] = np.abs(z)
+    mad_cols.append(col_name)
+
+# score global MAD
+df_merged["mad_score"] = df_merged[mad_cols].max(axis=1)
+
+# Flag de anomalía
+MAD_THRESHOLD = 3.5
+df_merged["es_anomalia_mad"] = df_merged["mad_score"] > MAD_THRESHOLD
+
 # Modelo de anomalías
 iso = IsolationForest(
     n_estimators=200, 
