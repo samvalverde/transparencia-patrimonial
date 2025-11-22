@@ -525,6 +525,12 @@ if analisis_path.exists():
         c1.metric("Filas territoriales", f"{len(df_analisis):,}")
         if "anomaly_score" in df_analisis.columns:
             c2.metric("Score medio", f"{df_analisis['anomaly_score'].mean():.4f}")
+                # Métricas de MAD si existen
+        if "mad_score" in df_analisis.columns:
+            c3.metric("MAD promedio", f"{df_analisis['mad_score'].mean():.4f}")
+        if "es_anomalia_mad" in df_analisis.columns:
+            prop_mad = df_analisis["es_anomalia_mad"].mean() * 100
+            c4.metric("% filas anómalas (MAD)", f"{prop_mad:.2f}%")
         if "anio" in df_analisis.columns:
             try:
                 c3.metric(
@@ -547,6 +553,18 @@ if analisis_path.exists():
             top5["ranking"] = range(1, len(top5) + 1)
             st.write("Provincias con mayor atipicidad (score más bajo = más anómalo):")
             st.dataframe(top5)
+                # Ranking simple por MAD (promedio de mad_score por provincia)
+        if {"provincia", "mad_score"}.issubset(df_analisis.columns):
+            top5_mad = (
+                df_analisis.groupby("provincia")["mad_score"]
+                .mean()
+                .sort_values(ascending=False)  # mayor MAD = más extremo
+                .head(5)
+                .reset_index()
+            )
+            top5_mad["ranking_mad"] = range(1, len(top5_mad) + 1)
+            st.write("Provincias más extremas según MAD (promedio de mad_score):")
+            st.dataframe(top5_mad)
     except Exception:
         pass
 
@@ -629,6 +647,17 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
             render_province_map(ranking_df, titulo="Mapa de anomalías por provincia")
         except Exception:
             pass
+                # Comparación Isolation Forest vs MAD por provincia (si existen columnas)
+        if df_src is not None and {"provincia", "anomaly_score", "mad_score"}.issubset(df_src.columns):
+            comp = df_src.groupby("provincia").agg(
+                anomaly_score_mean=("anomaly_score", "mean"),
+                mad_score_mean=("mad_score", "mean"),
+                mad_anom_frac=("es_anomalia_mad", "mean"),
+            ).reset_index()
+            comp["mad_anom_frac"] = (comp["mad_anom_frac"] * 100).round(2)
+            st.markdown("#### Comparación por provincia: Isolation Forest vs MAD")
+            st.dataframe(comp.sort_values("mad_score_mean", ascending=False).head(top_n))
+
 
     # Cantones
     with tab_cant:
