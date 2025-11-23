@@ -791,6 +791,23 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
                 mad_anom_frac=("es_anomalia_mad", "mean"),
             ).reset_index()
             comp["mad_anom_frac"] = (comp["mad_anom_frac"] * 100).round(2)
+            st.markdown(
+                        """
+                    **¿Qué es MAD?**
+
+                    El método MAD (*Median Absolute Deviation*) es un algoritmo estadístico robusto para detectar valores atípicos.
+                    En lugar de usar la media y la desviación estándar, calcula:
+
+                    - La **mediana** de los datos.
+                    - La desviación absoluta de cada valor respecto a esa mediana.
+                    - La **mediana de esas desviaciones** (MAD).
+
+                    A partir de eso se construye un puntaje de atipicidad (*score MAD*):  
+                    valores más altos indican que una provincia, cantón o distrito se aleja más del patrón “normal”
+                    de comportamiento patrimonial y registral.
+                    """
+                )
+
             st.markdown("#### Comparación por provincia: Isolation Forest vs MAD")
             st.dataframe(comp.sort_values("mad_score_mean", ascending=False).head(top_n))
 
@@ -832,7 +849,23 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
                 xaxis_title="Cantón", yaxis_title="Score de anomalía (↓ = más atípico)"
             )
             st.plotly_chart(fig_cant, use_container_width=True)
+                        # Comparación Isolation Forest vs MAD por cantón (si existen columnas)
+            if {"provincia", "canton", "anomaly_score", "mad_score", "es_anomalia_mad"}.issubset(df_c.columns):
+                comp_cant = (
+                    df_c.groupby(["provincia", "canton"])
+                    .agg(
+                        anomaly_score_mean=("anomaly_score", "mean"),
+                        mad_score_mean=("mad_score", "mean"),
+                        mad_anom_frac=("es_anomalia_mad", "mean"),
+                    )
+                    .reset_index()
+                )
+                comp_cant["mad_anom_frac"] = (comp_cant["mad_anom_frac"] * 100).round(2)
 
+                st.markdown("### Comparación por cantón: Isolation Forest vs MAD")
+                st.dataframe(
+                    comp_cant.sort_values("mad_score_mean", ascending=False).head(top_n)
+                )
     # Distritos
     with tab_dist:
         if df_src is None:
@@ -873,6 +906,24 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
                 yaxis_title="Score de anomalía (↓ = más atípico)",
             )
             st.plotly_chart(fig_dist, use_container_width=True)
+                        # Comparación Isolation Forest vs MAD por distrito (si existen columnas)
+            if {"provincia", "canton", "distrito", "anomaly_score", "mad_score", "es_anomalia_mad"}.issubset(df_d.columns):
+                comp_dist = (
+                    df_d.groupby(["provincia", "canton", "distrito"])
+                    .agg(
+                        anomaly_score_mean=("anomaly_score", "mean"),
+                        mad_score_mean=("mad_score", "mean"),
+                        mad_anom_frac=("es_anomalia_mad", "mean"),
+                    )
+                    .reset_index()
+                )
+                comp_dist["mad_anom_frac"] = (comp_dist["mad_anom_frac"] * 100).round(2)
+
+                st.markdown("### Comparación por distrito: Isolation Forest vs MAD")
+                st.dataframe(
+                    comp_dist.sort_values("mad_score_mean", ascending=False).head(top_n)
+                )
+
 
 if run_btn:
     try:
