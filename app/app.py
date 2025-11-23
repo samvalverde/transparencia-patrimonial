@@ -810,6 +810,20 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
 
             st.markdown("#### Comparación por provincia: Isolation Forest vs MAD")
             st.dataframe(comp.sort_values("mad_score_mean", ascending=False).head(top_n))
+            st.markdown("### Distribución de MAD Score")
+
+            fig_box = px.box(
+                df_src,
+                x="provincia",
+                y="mad_score",
+                title="Distribución de MAD Score por provincia",
+                labels={"mad_score": "MAD Score", "provincia": "Province"},
+                color="provincia"
+            )
+
+            fig_box.update_layout(showlegend=False)
+            st.plotly_chart(fig_box, use_container_width=True)
+
 
     # Cantones
     with tab_cant:
@@ -862,10 +876,50 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
                 )
                 comp_cant["mad_anom_frac"] = (comp_cant["mad_anom_frac"] * 100).round(2)
 
+                st.markdown(
+                        """
+                    **¿Qué es MAD?**
+
+                    El método MAD (*Median Absolute Deviation*) es un algoritmo estadístico robusto para detectar valores atípicos.
+                    En lugar de usar la media y la desviación estándar, calcula:
+
+                    - La **mediana** de los datos.
+                    - La desviación absoluta de cada valor respecto a esa mediana.
+                    - La **mediana de esas desviaciones** (MAD).
+
+                    A partir de eso se construye un puntaje de atipicidad (*score MAD*):  
+                    valores más altos indican que una provincia, cantón o distrito se aleja más del patrón “normal”
+                    de comportamiento patrimonial y registral.
+                    """
+                )
                 st.markdown("### Comparación por cantón: Isolation Forest vs MAD")
                 st.dataframe(
                     comp_cant.sort_values("mad_score_mean", ascending=False).head(top_n)
                 )
+                st.subheader("Distribución de MAD Score")
+
+                top10_cantones = (
+                    df_src.groupby("canton")["mad_score"]
+                    .mean()
+                    .sort_values(ascending=False)
+                    .head(10)
+                    .index.tolist()
+                )
+
+                df_top_cant = df_src[df_src["canton"].isin(top10_cantones)]
+
+                fig_mad_cant = px.box(
+                    df_top_cant,
+                    x="canton",
+                    y="mad_score",
+                    color="canton",
+                    points="all",
+                    title="Distribución de MAD Score por cantón",
+                )
+
+                fig_mad_cant.update_layout(xaxis_title="Cantón", yaxis_title="MAD Score")
+                st.plotly_chart(fig_mad_cant, use_container_width=True)
+
     # Distritos
     with tab_dist:
         if df_src is None:
@@ -918,11 +972,49 @@ if ranking_path is not None and ranking_path.exists() and not run_btn:
                     .reset_index()
                 )
                 comp_dist["mad_anom_frac"] = (comp_dist["mad_anom_frac"] * 100).round(2)
+                st.markdown(
+                        """
+                    **¿Qué es MAD?**
 
+                    El método MAD (*Median Absolute Deviation*) es un algoritmo estadístico robusto para detectar valores atípicos.
+                    En lugar de usar la media y la desviación estándar, calcula:
+
+                    - La **mediana** de los datos.
+                    - La desviación absoluta de cada valor respecto a esa mediana.
+                    - La **mediana de esas desviaciones** (MAD).
+
+                    A partir de eso se construye un puntaje de atipicidad (*score MAD*):  
+                    valores más altos indican que una provincia, cantón o distrito se aleja más del patrón “normal”
+                    de comportamiento patrimonial y registral.
+                    """
+                )
                 st.markdown("### Comparación por distrito: Isolation Forest vs MAD")
                 st.dataframe(
                     comp_dist.sort_values("mad_score_mean", ascending=False).head(top_n)
                 )
+                st.subheader("Distribución de MAD Score")
+
+                top10_dist = (
+                    df_d.groupby("distrito")["mad_score"]
+                    .mean()
+                    .sort_values(ascending=False)
+                    .head(10)
+                    .index.tolist()
+                )
+
+                df_top_dist = df_d[df_d["distrito"].isin(top10_dist)]
+
+                fig_mad_dist = px.box(
+                    df_top_dist,
+                    x="distrito",
+                    y="mad_score",
+                    color="distrito",
+                    points="all",
+                    title="Distribución de MAD Score por distrito",
+                )
+
+                fig_mad_dist.update_layout(xaxis_title="Distrito", yaxis_title="MAD Score")
+                st.plotly_chart(fig_mad_dist, use_container_width=True)
 
 
 if run_btn:
